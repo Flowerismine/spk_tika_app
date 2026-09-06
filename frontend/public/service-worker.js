@@ -33,6 +33,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Never intercept or cache API requests
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
   // Navigation request fallback or network first
   if (event.request.mode === 'navigate') {
     event.respondWith(

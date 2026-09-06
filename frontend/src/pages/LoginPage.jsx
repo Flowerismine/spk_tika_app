@@ -15,6 +15,10 @@ const LoginPage = () => {
   const { user, isError, isSuccess, isLoading, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    dispatch(reset());
+  }, [dispatch]);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (user || (isSuccess && token)) {
       navigate("/dashboard");
