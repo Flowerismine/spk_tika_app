@@ -138,6 +138,12 @@ const DaftarPasien = () => {
   const isDefisit = (kat) => kat && kat.toLowerCase().includes("defisit");
   const isSurplus = (kat) => kat && kat.toLowerCase().includes("surplus");
 
+  const getKategoriBadge = (kat) => {
+    if (isDefisit(kat)) return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+    if (isSurplus(kat)) return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    return "bg-green-500/20 text-green-400 border-green-500/30";
+  };
+
   // Statistik
   const stat = {
     total: pasien.length,
@@ -260,7 +266,7 @@ const DaftarPasien = () => {
                         <td className="px-4 py-3 text-white/80">{i + 1}</td>
                         <td className="px-4 py-3 text-white font-semibold">{p.namaPasien}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${kategoriColor[p.kategori] || "bg-gray-500/20 text-gray-400"}`}>
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getKategoriBadge(p.kategori)}`}>
                             {p.kategori}
                           </span>
                         </td>
