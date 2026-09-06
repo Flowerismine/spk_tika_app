@@ -18,7 +18,9 @@ const PerhitunganRoute = require("./routes/PerhitunganRoute.js");
 
 dotenv.config();
 const app = express();
-const port = process.env.APP_PORT || 5000;
+// Vercel Services (dan platform Web Service lain seperti Render) menyuntikkan
+// PORT sendiri — backend harus listen di situ, bukan port tetap.
+const port = process.env.PORT || process.env.APP_PORT || 5000;
 
 // CORS — izinkan localhost (development) dan URL production
 const allowedOrigins = [
@@ -53,9 +55,10 @@ app.use(DatasetMakananRoute);
 app.use(HasilAkhirMakananRoute);
 app.use(PerhitunganRoute);
 
-// Di lingkungan serverless (Vercel), module ini bisa di-require ulang tiap
-// cold start. Kita pakai flag di `global` supaya authenticate()+sync() cuma
-// jalan sekali per container yang masih hangat, bukan tiap invocation.
+// Guard ini mencegah authenticate()+sync() terpanggil dua kali kalau file
+// ini di-require ulang (misal saat hot-reload dev). Di mode Web Service
+// (Vercel Services / Render), proses cuma start sekali, jadi guard ini
+// sekadar jaga-jaga, bukan requirement utama.
 if (!global.__dbInitialized) {
   global.__dbInitialized = (async () => {
     try {
@@ -69,8 +72,6 @@ if (!global.__dbInitialized) {
   })();
 }
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(port, () => console.log(`Server berjalan secara lokal di port ${port}`));
-}
+app.listen(port, () => console.log(`Server berjalan di port ${port}`));
 
 module.exports = app;
