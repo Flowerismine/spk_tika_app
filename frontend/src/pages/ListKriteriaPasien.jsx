@@ -5,7 +5,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const ListKriteriaPasien = () => {
   const [kriteriaDefisit, setKriteriaDefisit] = useState([]);
@@ -98,6 +101,47 @@ const ListKriteriaPasien = () => {
     }
   };
 
+  const exportPDF = (title, list, filename) => {
+    if (list.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(title.toUpperCase(), pageW / 2, 14, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")} | Total Kriteria: ${list.length}`, pageW / 2, 20, { align: "center" });
+
+    const rows = list.map((item, idx) => [idx + 1, item.namaKriteria]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Kriteria"]],
+      body: rows,
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 160 } },
+      margin: { left: 15, right: 15 },
+    });
+
+    doc.save(`${filename}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = (title, list, filename) => {
+    if (list.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = list.map((item, idx) => ({
+      "No": idx + 1,
+      "Nama Kriteria": item.namaKriteria
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, title);
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Background Effects */}
@@ -108,8 +152,8 @@ const ListKriteriaPasien = () => {
       </div>
 
       {/* Floating Elements - Hidden on mobile for better performance */}
-      <div className="hidden md:block absolute top-20 left-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="hidden md:block absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="hidden sm:block absolute top-20 left-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="hidden sm:block absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
       {/* Main Content - Added top padding for navbar clearance */}
       <div className="relative z-10 pt-20 sm:pt-24 md:pt-6 px-4 sm:px-6 pb-6">
@@ -117,14 +161,14 @@ const ListKriteriaPasien = () => {
           {/* Header - Improved mobile spacing */}
           <div className="mb-6 sm:mb-8">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-xl sm:rounded-2xl p-4 sm:p-6">
-              <div className="flex flex-col gap-3 sm:gap-4">
-                <div className="text-center sm:text-left">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
-                    Kalori Pasien
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-center md:text-left">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                    Kriteria Pasien
                   </h1>
                   <p className="text-sm sm:text-base text-white/70 leading-relaxed">
-                    Manajemen kriteria untuk klasifikasi kebutuhan kalori
-                    berdasarkan kategori defisit dan surplus
+                    Manajemen kriteria untuk klasifikasi kalori defisit dan
+                    surplus pasien
                   </p>
                 </div>
               </div>
@@ -135,7 +179,7 @@ const ListKriteriaPasien = () => {
           <div className="mb-6 sm:mb-8">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-xl sm:rounded-2xl overflow-hidden">
               <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10">
-                <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                   <div className="text-center sm:text-left">
                     <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2">
                       Kriteria Defisit Kalori
@@ -145,13 +189,27 @@ const ListKriteriaPasien = () => {
                       kalori
                     </p>
                   </div>
-                  <div className="flex justify-center sm:justify-start">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
                     <button
-                      className="group flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+                      className="group flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg text-xs sm:text-sm font-medium"
                       onClick={() => navigate("/add-kriteria-defisit")}
                     >
-                      <FaPlus className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="font-medium">Tambah Kriteria</span>
+                      <FaPlus className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Tambah</span>
+                    </button>
+                    <button
+                      onClick={() => exportPDF("Kriteria Defisit Kalori", kriteriaDefisit, "Kriteria_Defisit_Kalori")}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 rounded-lg sm:rounded-xl text-rose-200 text-xs sm:text-sm font-semibold transition"
+                    >
+                      <FaFilePdf className="w-3.5 h-3.5 text-rose-300" />
+                      <span>PDF</span>
+                    </button>
+                    <button
+                      onClick={() => exportExcel("Kriteria Defisit Kalori", kriteriaDefisit, "Kriteria_Defisit_Kalori")}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 rounded-lg sm:rounded-xl text-emerald-200 text-xs sm:text-sm font-semibold transition"
+                    >
+                      <FaFileExcel className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Excel</span>
                     </button>
                   </div>
                 </div>
@@ -216,7 +274,7 @@ const ListKriteriaPasien = () => {
           <div className="mb-6 sm:mb-8">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-xl sm:rounded-2xl overflow-hidden">
               <div className="bg-gradient-to-r from-green-600/80 to-emerald-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10">
-                <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                   <div className="text-center sm:text-left">
                     <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2">
                       Kriteria Surplus Kalori
@@ -226,13 +284,27 @@ const ListKriteriaPasien = () => {
                       kalori
                     </p>
                   </div>
-                  <div className="flex justify-center sm:justify-start">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
                     <button
-                      className="group flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+                      className="group flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg text-xs sm:text-sm font-medium"
                       onClick={() => navigate("/add-kriteria-surplus")}
                     >
-                      <FaPlus className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="font-medium">Tambah Kriteria</span>
+                      <FaPlus className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Tambah</span>
+                    </button>
+                    <button
+                      onClick={() => exportPDF("Kriteria Surplus Kalori", kriteriaSurplus, "Kriteria_Surplus_Kalori")}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 rounded-lg sm:rounded-xl text-rose-200 text-xs sm:text-sm font-semibold transition"
+                    >
+                      <FaFilePdf className="w-3.5 h-3.5 text-rose-300" />
+                      <span>PDF</span>
+                    </button>
+                    <button
+                      onClick={() => exportExcel("Kriteria Surplus Kalori", kriteriaSurplus, "Kriteria_Surplus_Kalori")}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 rounded-lg sm:rounded-xl text-emerald-200 text-xs sm:text-sm font-semibold transition"
+                    >
+                      <FaFileExcel className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Excel</span>
                     </button>
                   </div>
                 </div>

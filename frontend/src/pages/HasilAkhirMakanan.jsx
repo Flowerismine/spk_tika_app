@@ -5,7 +5,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaTable, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaTable, FaCheckCircle, FaExclamationTriangle, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const HasilAkhirMakanan = () => {
   const [hasilAkhirMakanan, setHasilAkhirMakanan] = useState([]);
@@ -43,6 +46,59 @@ const HasilAkhirMakanan = () => {
     }
   };
 
+  const exportPDF = () => {
+    if (hasilAkhirMakanan.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("LAPORAN HASIL AKHIR KLASIFIKASI MAKANAN DIABETES MELITUS", pageW / 2, 14, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")} | Total Makanan: ${hasilAkhirMakanan.length}`, pageW / 2, 20, { align: "center" });
+
+    const rows = hasilAkhirMakanan.map((h, idx) => [
+      idx + 1,
+      h.namaMakanan,
+      h.kategori || "-",
+      h.status || "-"
+    ]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Makanan", "Kategori Makanan", "Status"]],
+      body: rows,
+      headStyles: { fillColor: [147, 51, 234], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 8.5, cellPadding: 3 },
+      columnStyles: {
+        0: { cellWidth: 15 },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 45 },
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    doc.save(`Hasil_Akhir_Makanan_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = () => {
+    if (hasilAkhirMakanan.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = hasilAkhirMakanan.map((h, idx) => ({
+      "No": idx + 1,
+      "Nama Makanan": h.namaMakanan,
+      "Kategori Makanan": h.kategori || "-",
+      "Status": h.status || "-"
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Hasil Akhir Makanan");
+    XLSX.writeFile(wb, `Hasil_Akhir_Makanan_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Background Effects */}
@@ -62,7 +118,7 @@ const HasilAkhirMakanan = () => {
           {/* Hasil Akhir Klasifikasi Makanan - Mobile Responsive */}
           <div className="mb-6">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-xl sm:rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-600/80 via-pink-600/80 to-rose-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10">
+              <div className="bg-gradient-to-r from-purple-600/80 via-pink-600/80 to-rose-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center">
                     <FaTable className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
@@ -75,6 +131,23 @@ const HasilAkhirMakanan = () => {
                       Hasil prediksi makanan yang boleh dan tidak boleh
                     </p>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportPDF}
+                    className="flex items-center gap-2 px-3 py-2 bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 rounded-xl text-rose-200 text-sm font-semibold transition"
+                  >
+                    <FaFilePdf className="w-4 h-4 text-rose-300" />
+                    <span>Download PDF</span>
+                  </button>
+                  <button
+                    onClick={exportExcel}
+                    className="flex items-center gap-2 px-3 py-2 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 rounded-xl text-emerald-200 text-sm font-semibold transition"
+                  >
+                    <FaFileExcel className="w-4 h-4 text-emerald-300" />
+                    <span>Download Excel</span>
+                  </button>
                 </div>
               </div>
 

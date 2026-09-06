@@ -4,7 +4,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const ListKriteriaMakanan = () => {
   const [kriteriaMakanan, setKriteriaMakanan] = useState([]);
@@ -60,6 +63,47 @@ const ListKriteriaMakanan = () => {
     }
   };
 
+  const exportPDF = () => {
+    if (kriteriaMakanan.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("LAPORAN KRITERIA MAKANAN DIABETES MELITUS", pageW / 2, 14, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")} | Total Kriteria: ${kriteriaMakanan.length}`, pageW / 2, 20, { align: "center" });
+
+    const rows = kriteriaMakanan.map((item, idx) => [idx + 1, item.namaKriteria]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Kriteria"]],
+      body: rows,
+      headStyles: { fillColor: [234, 88, 12], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 160 } },
+      margin: { left: 15, right: 15 },
+    });
+
+    doc.save(`Kriteria_Makanan_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = () => {
+    if (kriteriaMakanan.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = kriteriaMakanan.map((item, idx) => ({
+      "No": idx + 1,
+      "Nama Kriteria": item.namaKriteria
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kriteria Makanan");
+    XLSX.writeFile(wb, `Kriteria_Makanan_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Background Effects */}
@@ -96,7 +140,7 @@ const ListKriteriaMakanan = () => {
           <div className="mb-8">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden">
               <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm p-6 border-b border-white/10">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-2">
                       Kriteria Makanan
@@ -105,13 +149,29 @@ const ListKriteriaMakanan = () => {
                       Data kriteria untuk makanan yang boleh dan tidak boleh
                     </p>
                   </div>
-                  <button
-                    className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                    onClick={() => navigate("/add-kriteria-makanan")}
-                  >
-                    <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="font-medium">Tambah Kriteria</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg text-sm font-medium"
+                      onClick={() => navigate("/add-kriteria-makanan")}
+                    >
+                      <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Tambah Kriteria</span>
+                    </button>
+                    <button
+                      onClick={exportPDF}
+                      className="flex items-center gap-2 px-3.5 py-2 bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 rounded-xl text-rose-200 text-sm font-semibold transition"
+                    >
+                      <FaFilePdf className="w-4 h-4 text-rose-300" />
+                      <span>PDF</span>
+                    </button>
+                    <button
+                      onClick={exportExcel}
+                      className="flex items-center gap-2 px-3.5 py-2 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 rounded-xl text-emerald-200 text-sm font-semibold transition"
+                    >
+                      <FaFileExcel className="w-4 h-4 text-emerald-300" />
+                      <span>Excel</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

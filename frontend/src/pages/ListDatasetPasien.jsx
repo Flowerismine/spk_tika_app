@@ -4,7 +4,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const ListDatasetPasien = () => {
   const [kriteriaDefisit, setKriteriaDefisit] = useState([]);
@@ -127,6 +130,49 @@ const ListDatasetPasien = () => {
     }
   };
 
+  const exportPDF = (title, kriteriaList, datasetList, filename) => {
+    if (datasetList.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(title.toUpperCase(), pageW / 2, 14, { align: "center" });
+
+    const headers = ["No", ...kriteriaList.map(k => k.namaKriteria)];
+    const rows = datasetList.map((item, idx) => [
+      idx + 1,
+      ...kriteriaList.map(k => item.nilai ? item.nilai[k.namaKriteria] || "-" : "-")
+    ]);
+
+    autoTable(doc, {
+      startY: 22,
+      head: [headers],
+      body: rows,
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 2 },
+      margin: { left: 10, right: 10 },
+    });
+
+    doc.save(`${filename}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = (title, kriteriaList, datasetList, filename) => {
+    if (datasetList.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = datasetList.map((item, idx) => {
+      const row = { "No": idx + 1 };
+      kriteriaList.forEach(k => {
+        row[k.namaKriteria] = item.nilai ? item.nilai[k.namaKriteria] || "-" : "-";
+      });
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, title);
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Background Effects */}
@@ -156,13 +202,29 @@ const ListDatasetPasien = () => {
                       kalori
                     </p>
                   </div>
-                  <button
-                    onClick={() => navigate("/add-dataset-defisit")}
-                    className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  >
-                    <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="font-medium">Tambah Dataset</span>
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => exportPDF("Dataset Defisit Kalori", kriteriaDefisit, datasetDefisit, "Dataset_Defisit_Kalori")}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-red-600/80 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                      <FaFilePdf className="w-4 h-4" />
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => exportExcel("Dataset Defisit Kalori", kriteriaDefisit, datasetDefisit, "Dataset_Defisit_Kalori")}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600/80 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                      <FaFileExcel className="w-4 h-4" />
+                      Excel
+                    </button>
+                    <button
+                      onClick={() => navigate("/add-dataset-defisit")}
+                      className="group flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
+                    >
+                      <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium">Tambah Dataset</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -249,13 +311,29 @@ const ListDatasetPasien = () => {
                       kalori
                     </p>
                   </div>
-                  <button
-                    onClick={() => navigate("/add-dataset-surplus")}
-                    className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  >
-                    <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="font-medium">Tambah Dataset</span>
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => exportPDF("Dataset Surplus Kalori", kriteriaSurplus, datasetSurplus, "Dataset_Surplus_Kalori")}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-red-600/80 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                      <FaFilePdf className="w-4 h-4" />
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => exportExcel("Dataset Surplus Kalori", kriteriaSurplus, datasetSurplus, "Dataset_Surplus_Kalori")}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600/80 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                      <FaFileExcel className="w-4 h-4" />
+                      Excel
+                    </button>
+                    <button
+                      onClick={() => navigate("/add-dataset-surplus")}
+                      className="group flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
+                    >
+                      <FaPlus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium">Tambah Dataset</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

@@ -4,7 +4,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaUsers, FaUserPlus, FaPrint, FaTrash, FaSpinner, FaSearch } from "react-icons/fa";
+import { FaUsers, FaUserPlus, FaPrint, FaTrash, FaSpinner, FaSearch, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const DaftarPasien = () => {
   const [pasien, setPasien] = useState([]);
@@ -71,6 +74,63 @@ const DaftarPasien = () => {
     window.open("/cetak-pasien", "_blank");
   };
 
+  const exportPDF = () => {
+    if (pasien.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("LAPORAN DATA PASIEN & HASIL KLASIFIKASI DIABETES MELITUS", pageW / 2, 14, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")} | Total Pasien: ${pasien.length}`, pageW / 2, 20, { align: "center" });
+
+    const rows = pasien.map((p, i) => [
+      i + 1,
+      p.namaPasien,
+      p.kategori || "-",
+      p.metadata?.jenisKelamin || p.metadata?.nilai?.["Jenis Kelamin"] || "-",
+      p.metadata?.usia || p.metadata?.usiaAngka || p.metadata?.nilai?.["Usia"] || "-",
+      p.metadata?.imt || p.metadata?.imtAngka || p.metadata?.nilai?.["IMT"] || "-",
+      p.metadata?.rekomendasiGizi || "-",
+      new Date(p.createdAt).toLocaleDateString("id-ID")
+    ]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Pasien", "Kategori Kalori", "JK", "Usia", "IMT", "Rekomendasi Gizi", "Tanggal"]],
+      body: rows,
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 2 },
+      margin: { left: 10, right: 10 },
+    });
+
+    doc.save(`Laporan_Daftar_Pasien_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = () => {
+    if (pasien.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = pasien.map((p, i) => ({
+      "No": i + 1,
+      "Nama Pasien": p.namaPasien,
+      "Kategori Kalori": p.kategori || "-",
+      "Jenis Kelamin": p.metadata?.jenisKelamin || p.metadata?.nilai?.["Jenis Kelamin"] || "-",
+      "Usia": p.metadata?.usia || p.metadata?.usiaAngka || p.metadata?.nilai?.["Usia"] || "-",
+      "IMT": p.metadata?.imt || p.metadata?.imtAngka || p.metadata?.nilai?.["IMT"] || "-",
+      "Hasil Defisit": p.metadata?.hasilDefisit || "-",
+      "Hasil Surplus": p.metadata?.hasilSurplus || "-",
+      "Rekomendasi Gizi": p.metadata?.rekomendasiGizi || "-",
+      "Tanggal": new Date(p.createdAt).toLocaleDateString("id-ID")
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Daftar Pasien");
+    XLSX.writeFile(wb, `Laporan_Daftar_Pasien_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const filtered = pasien.filter(p =>
     p.namaPasien.toLowerCase().includes(search.toLowerCase())
   );
@@ -110,13 +170,29 @@ const DaftarPasien = () => {
                   <p className="text-white/70 text-sm">Riwayat klasifikasi pasien yang sudah diproses sistem</p>
                 </div>
               </div>
-              <button
-                onClick={() => navigate("/klasifikasi-pasien")}
-                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300"
-              >
-                <FaUserPlus className="w-5 h-5" />
-                Tambah Pasien Baru
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={exportPDF}
+                  className="flex items-center gap-2 px-4 py-3 bg-red-600/80 hover:bg-red-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300"
+                >
+                  <FaFilePdf className="w-4 h-4" />
+                  PDF
+                </button>
+                <button
+                  onClick={exportExcel}
+                  className="flex items-center gap-2 px-4 py-3 bg-emerald-600/80 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300"
+                >
+                  <FaFileExcel className="w-4 h-4" />
+                  Excel
+                </button>
+                <button
+                  onClick={() => navigate("/klasifikasi-pasien")}
+                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300"
+                >
+                  <FaUserPlus className="w-5 h-5" />
+                  Tambah Pasien Baru
+                </button>
+              </div>
             </div>
           </div>
 

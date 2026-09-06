@@ -4,7 +4,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../features/authSlice";
-import { FaTable, FaCheckCircle, FaExclamationTriangle, FaPrint } from "react-icons/fa";
+import { FaTable, FaCheckCircle, FaExclamationTriangle, FaPrint, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const HasilAkhirPasien = () => {
   const [hasilAkhirPasien, setHasilAkhirPasien] = useState([]);
@@ -71,9 +74,6 @@ const HasilAkhirPasien = () => {
   };
 
   // Function untuk mendapatkan rekomendasi makanan berdasarkan kategori pasien (DETERMINISTIK)
-  // Surplus: 7 tinggi + 3 rendah = 10 total (Karbo 3, Protein 3, Serat 2, Camilan 2)
-  // Normal: 5 tinggi + 5 rendah = 10 total
-  // Defisit: 10 rendah = 10 total
   const getRekomendasiMakanan = (kategoriPasien) => {
     let result = [];
     if (!makanan || makanan.length === 0) return [];
@@ -106,7 +106,6 @@ const HasilAkhirPasien = () => {
         result = [...result, ...remaining.slice(0, 10 - result.length)];
       }
     } else if (kategoriPasien === "Defisit Kalori") {
-      // Untuk defisit kalori: makanan rendah kalori & rendah IG
       const kaloriRendah = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Tidak");
       const karbo = getDeterministicByCategory(kaloriRendah, "karbohidrat", 3);
       const protein = getDeterministicByCategory(kaloriRendah, "protein", 3);
@@ -124,7 +123,6 @@ const HasilAkhirPasien = () => {
         result = [...result, ...additionalLow];
       }
     } else {
-      // Kalori Normal: kombinasi seimbang
       const kaloriTinggi = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Ya");
       const kaloriRendah = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Tidak");
       
@@ -145,8 +143,73 @@ const HasilAkhirPasien = () => {
       }
     }
     
-    // Filter hasil yang valid dan batasi maksimal 10
     return result.filter(item => item && item.nilai).slice(0, 10);
+  };
+
+  const exportPDF = () => {
+    if (hasilAkhirPasien.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("LAPORAN HASIL AKHIR KLASIFIKASI PASIEN & REKOMENDASI GIZI", pageW / 2, 14, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")} | Total Data: ${hasilAkhirPasien.length} Pasien`, pageW / 2, 20, { align: "center" });
+
+    const rows = hasilAkhirPasien.map((hasil, idx) => {
+      const rekMakanan = getRekomendasiMakanan(hasil.kategori);
+      const namaMakananList = rekMakanan.map(m => m.nilai?.["Nama Makanan"]).filter(Boolean).join(", ") || "-";
+      return [
+        idx + 1,
+        hasil.namaPasien,
+        hasil.kategori || "-",
+        hasil.metadata?.rekomendasiGizi || "-",
+        namaMakananList
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Pasien", "Kategori Kalori", "Rekomendasi Gizi", "Daftar Makanan Direkomendasikan"]],
+      body: rows,
+      headStyles: { fillColor: [147, 51, 234], textColor: 255, fontSize: 9, fontStyle: "bold" },
+      styles: { fontSize: 8, cellPadding: 2.5 },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 65 },
+        4: { cellWidth: 115 },
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    doc.save(`Hasil_Akhir_Pasien_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportExcel = () => {
+    if (hasilAkhirPasien.length === 0) return alert("Tidak ada data untuk diunduh.");
+    const exportData = hasilAkhirPasien.map((hasil, idx) => {
+      const rekMakanan = getRekomendasiMakanan(hasil.kategori);
+      const namaMakananList = rekMakanan.map(m => m.nilai?.["Nama Makanan"]).filter(Boolean).join(", ") || "-";
+      return {
+        "No": idx + 1,
+        "Nama Pasien": hasil.namaPasien,
+        "Kategori Kalori": hasil.kategori || "-",
+        "Status Prediksi Defisit": hasil.metadata?.hasilDefisit || "-",
+        "Status Prediksi Surplus": hasil.metadata?.hasilSurplus || "-",
+        "Rekomendasi Gizi": hasil.metadata?.rekomendasiGizi || "-",
+        "Rekomendasi Makanan": namaMakananList
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Hasil Akhir Pasien");
+    XLSX.writeFile(wb, `Hasil_Akhir_Pasien_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   return (
@@ -168,7 +231,7 @@ const HasilAkhirPasien = () => {
           {/* Hasil Akhir Klasifikasi Pasien */}
           <div className="mb-6">
             <div className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-xl sm:rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-600/80 via-pink-600/80 to-rose-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10">
+              <div className="bg-gradient-to-r from-purple-600/80 via-pink-600/80 to-rose-600/80 backdrop-blur-sm p-4 sm:p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center">
                     <FaTable className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
@@ -181,6 +244,23 @@ const HasilAkhirPasien = () => {
                       Perbandingan hasil prediksi defisit dan surplus
                     </p>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportPDF}
+                    className="flex items-center gap-2 px-3 py-2 bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 rounded-xl text-rose-200 text-sm font-semibold transition"
+                  >
+                    <FaFilePdf className="w-4 h-4 text-rose-300" />
+                    <span>Download PDF</span>
+                  </button>
+                  <button
+                    onClick={exportExcel}
+                    className="flex items-center gap-2 px-3 py-2 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 rounded-xl text-emerald-200 text-sm font-semibold transition"
+                  >
+                    <FaFileExcel className="w-4 h-4 text-emerald-300" />
+                    <span>Download Excel</span>
+                  </button>
                 </div>
               </div>
 
