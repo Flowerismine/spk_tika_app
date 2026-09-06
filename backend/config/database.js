@@ -1,26 +1,23 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-// ── Connection caching untuk lingkungan serverless (Vercel) ─────────────────
-// Setiap cold start bisa membuat koneksi baru ke MySQL. Tanpa cache, koneksi
-// akan menumpuk dan cepat menghabiskan connection limit MySQL (apalagi di
-// provider gratis). global object bertahan antar invocation selama container
-// masih "hangat", jadi kita simpan instance Sequelize di situ.
+// ── Pool koneksi ──────────────────────────────────────────────────────────
+// Backend ini jalan sebagai Web Service (Vercel Services / Render — proses
+// long-running, BUKAN serverless per-request), jadi cukup satu pool kecil
+// yang dipakai bersama sepanjang umur proses. Tidak perlu idle timeout
+// agresif seperti pola serverless karena prosesnya tidak cold-start ulang.
 //
 // CATATAN: paket Clever Cloud "DEV" adalah shared plan dengan connection
-// limit sangat kecil. Karena Vercel bisa menjalankan beberapa function
-// instance bersamaan (tiap instance = koneksi terpisah ke MySQL), pool di
-// sini sengaja dibuat sekecil mungkin (1 koneksi per instance) dan idle
-// timeout dipercepat supaya koneksi cepat dilepas saat tidak dipakai.
-// Kalau traffic naik dan sering kena error "too many connections", solusi
-// jangka panjangnya adalah upgrade paket Clever Cloud (XS ke atas), bukan
-// menaikkan angka di sini.
+// limit kecil. Pool tetap dibuat kecil (max 3) untuk jaga-jaga, tapi karena
+// cuma ada satu proses backend yang berjalan (bukan banyak instance
+// serverless), risiko "too many connections" jauh lebih rendah dibanding
+// mode serverless. Kalau nanti traffic naik dan tetap kena limit, solusi
+// jangka panjangnya adalah upgrade paket Clever Cloud (XS ke atas).
 const poolConfig = {
-  max: 1,      // 1 koneksi per function instance — paling aman untuk plan DEV
+  max: 3,
   min: 0,
   acquire: 30000,
-  idle: 1000,  // lepas koneksi cepat setelah idle, jangan digantung lama
-  evict: 1000,
+  idle: 10000,
 };
 
 const createConnection = () => {
@@ -48,6 +45,9 @@ const createConnection = () => {
       );
 };
 
+// Guard supaya tidak bikin koneksi ganda kalau module ini di-require ulang
+// (misal saat hot-reload dev). Tidak wajib untuk mode Web Service produksi,
+// tapi aman untuk dibiarkan.
 if (!global.__sequelizeInstance) {
   global.__sequelizeInstance = createConnection();
 }
