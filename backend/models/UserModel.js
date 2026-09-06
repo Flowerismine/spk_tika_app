@@ -47,7 +47,3 @@ const Users = db.define('users',{
 })
 
 module.exports = Users;
-
-(async () => {
-    await db.sync()
-})()
