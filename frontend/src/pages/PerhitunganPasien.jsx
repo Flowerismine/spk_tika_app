@@ -1,5 +1,5 @@
 import API_URL from "../api";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,7 @@ const PerhitunganPasien = () => {
 
   useEffect(() => { dispatch(getMe()); }, [dispatch]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -71,7 +72,6 @@ const PerhitunganPasien = () => {
     const styleHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4338CA" } }, alignment: { horizontal: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
     const styleSubHeader = { font: { bold: true }, fill: { fgColor: { rgb: "E0E7FF" } }, alignment: { horizontal: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
     const styleCell = { alignment: { horizontal: "center", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
-    const styleCellLeft = { alignment: { horizontal: "left", wrapText: true }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
     const styleYa    = { font: { bold: true, color: { rgb: "15803D" } }, fill: { fgColor: { rgb: "DCFCE7" } }, alignment: { horizontal: "center" }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
     const styleTidak = { font: { bold: true, color: { rgb: "B91C1C" } }, fill: { fgColor: { rgb: "FEE2E2" } }, alignment: { horizontal: "center" }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
     const styleSesuai    = { font: { bold: true, color: { rgb: "15803D" } }, fill: { fgColor: { rgb: "DCFCE7" } }, alignment: { horizontal: "center" }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
@@ -145,10 +145,6 @@ const PerhitunganPasien = () => {
       XLSX.utils.book_append_sheet(wb, wsAt, `${label} - 3. Prob Atribut`);
 
       // ── SHEET 4: Langkah 3 — Detail Perkalian Per Data ───────────────────
-      // Header utama
-      const pkHeader1 = [`LANGKAH 3 — DETAIL PERKALIAN NAIVE BAYES (Dataset ${label})`, ...Array(hasil.atribut.length * 4 + 5).fill("")];
-      const pkHeader2 = ["", "", ...Array(hasil.atribut.length * 4).fill(""), "", "", "", "", ""];
-
       // Sub-header baris 1: No | Nilai Atribut... | ──── P(Ya) ──── | ──── P(Tidak) ──── | ...
       const subH1 = ["No"];
       hasil.atribut.forEach(a => subH1.push(a, "", "", ""));

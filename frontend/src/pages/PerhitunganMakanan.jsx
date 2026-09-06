@@ -24,6 +24,7 @@ const PerhitunganMakanan = () => {
 
   useEffect(() => { dispatch(getMe()); }, [dispatch]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) { getKriteriaMakanan(); getDatasetMakanan(); }
