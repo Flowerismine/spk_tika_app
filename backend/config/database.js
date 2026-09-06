@@ -5,7 +5,7 @@ require("dotenv").config();
 // Development: pakai host/user/pass/dbname terpisah
 const db = process.env.DB_URL
   ? new Sequelize(process.env.DB_URL, {
-      dialect: "postgres",
+      dialect: "mysql",
       dialectOptions: {
         ssl: { require: true, rejectUnauthorized: false }
       },
@@ -17,7 +17,7 @@ const db = process.env.DB_URL
       process.env.DB_PASS || "",
       {
         host: process.env.DB_HOST || "localhost",
-        dialect: "postgres",
+        dialect: "mysql",
         logging: false,
       }
     );
