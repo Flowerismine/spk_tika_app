@@ -60,6 +60,17 @@ routes.forEach((route) => {
   app.use("/api", route);
 });
 
+app.get(["/test-db", "/api/test-db"], async (req, res) => {
+  try {
+    await db.authenticate();
+    const Users = require("./models/UserModel.js");
+    const count = await Users.count();
+    res.status(200).json({ status: "ok", message: "Database connected successfully", userCount: count });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message, stack: err.stack });
+  }
+});
+
 if (!global.__dbInitialized) {
   global.__dbInitialized = (async () => {
     try {
@@ -83,9 +94,11 @@ if (!global.__dbInitialized) {
         console.log("✅ Default admin user created (admin / admin123)");
       }
     } catch (err) {
-      console.error("Database error:", err.message);
+      console.error("Database error during init:", err.message);
     }
-  })();
+  })().catch((err) => {
+    console.error("Caught DB init promise error:", err);
+  });
 }
 
 if (require.main === module) {
