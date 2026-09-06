@@ -66,6 +66,21 @@ if (!global.__dbInitialized) {
       console.log("Database connected");
       await db.sync();
       console.log("All tables synced");
+
+      // Auto-seed user admin jika belum ada
+      const Users = require("./models/UserModel.js");
+      const argon = require("argon2");
+      const existing = await Users.findOne({ where: { username: "admin" } });
+      if (!existing) {
+        const hashPassword = await argon.hash("admin123");
+        await Users.create({
+          username: "admin",
+          email: "admin@spk.com",
+          password: hashPassword,
+          role: "admin",
+        });
+        console.log("✅ Default admin user created (admin / admin123)");
+      }
     } catch (err) {
       console.error("Database error:", err.message);
     }
