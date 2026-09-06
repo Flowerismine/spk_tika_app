@@ -18,11 +18,8 @@ const PerhitunganRoute = require("./routes/PerhitunganRoute.js");
 
 dotenv.config();
 const app = express();
-// Vercel Services (dan platform Web Service lain seperti Render) menyuntikkan
-// PORT sendiri — backend harus listen di situ, bukan port tetap.
 const port = process.env.PORT || process.env.APP_PORT || 5000;
 
-// CORS — izinkan localhost (development) dan URL production
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -43,22 +40,26 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-app.use(UserRoute);
-app.use(AuthRoute);
-app.use(KriteriaDefisitRoute);
-app.use(KriteriaSurplusRoute);
-app.use(DatasetDefisitRoute);
-app.use(DatasetSurplusRoute);
-app.use(HasilAkhirPasienRoute);
-app.use(KriteriaMakananRoute);
-app.use(DatasetMakananRoute);
-app.use(HasilAkhirMakananRoute);
-app.use(PerhitunganRoute);
+// Mount all routes for both root AND /api prefix for Vercel Serverless Function compatibility
+const routes = [
+  UserRoute,
+  AuthRoute,
+  KriteriaDefisitRoute,
+  KriteriaSurplusRoute,
+  DatasetDefisitRoute,
+  DatasetSurplusRoute,
+  HasilAkhirPasienRoute,
+  KriteriaMakananRoute,
+  DatasetMakananRoute,
+  HasilAkhirMakananRoute,
+  PerhitunganRoute,
+];
 
-// Guard ini mencegah authenticate()+sync() terpanggil dua kali kalau file
-// ini di-require ulang (misal saat hot-reload dev). Di mode Web Service
-// (Vercel Services / Render), proses cuma start sekali, jadi guard ini
-// sekadar jaga-jaga, bukan requirement utama.
+routes.forEach((route) => {
+  app.use(route);
+  app.use("/api", route);
+});
+
 if (!global.__dbInitialized) {
   global.__dbInitialized = (async () => {
     try {
