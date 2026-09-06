@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation, useMatch } from "react-router-dom";
 
-import { Navbar, Footer, Sidebar } from "./components";
+import { Navbar, Footer, Sidebar, InstallPWA } from "./components";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { 
   Dashboard, CetakHasil, LoginPage, 
@@ -104,6 +104,7 @@ const AppContent = () => {
           </div>
 
           {!isLoginPage && !isPrintMode && <Footer />}
+          <InstallPWA />
         </div>
       </div>
     </div>
