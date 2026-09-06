@@ -3,6 +3,10 @@
   publish = "frontend/build"
   functions = "backend/functions"
 
+[build.environment]
+  REACT_APP_API_URL = "/api"
+  CI = "false"
+
 [functions]
   external_node_modules = ["mysql2", "sequelize", "bcryptjs"]
   node_bundler = "esbuild"
