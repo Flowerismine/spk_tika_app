@@ -23,6 +23,7 @@
     "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.4",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "serverless-http": "^4.0.0"
   }
 }

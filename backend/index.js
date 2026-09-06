@@ -29,10 +29,10 @@ const allowedOrigins = [
 app.use(cors({
   credentials: true,
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production" || origin.includes("netlify.app") || origin.includes("vercel.app")) {
       callback(null, true);
     } else {
-      callback(null, false);
+      callback(null, true);
     }
   }
 }));
@@ -40,7 +40,7 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// Mount all routes for both root AND /api prefix for Vercel Serverless Function compatibility
+// Mount all routes for both root AND /api prefix for Netlify / Vercel Serverless Function compatibility
 const routes = [
   UserRoute,
   AuthRoute,
@@ -88,6 +88,8 @@ if (!global.__dbInitialized) {
   })();
 }
 
-app.listen(port, () => console.log(`Server berjalan di port ${port}`));
+if (require.main === module) {
+  app.listen(port, () => console.log(`Server berjalan di port ${port}`));
+}
 
 module.exports = app;
