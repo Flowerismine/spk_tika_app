@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spk-dm-v1';
+const CACHE_NAME = 'spk-dm-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -23,6 +23,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
+            console.log('Clearing old PWA cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -38,12 +39,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation request fallback or network first
-  if (event.request.mode === 'navigate') {
+  // Network-first strategy for navigation & JS files so installed PWAs always fetch the latest backend API code
+  if (event.request.mode === 'navigate' || event.request.destination === 'script') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html');
-      })
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => cached || caches.match('/index.html'));
+        })
     );
     return;
   }
