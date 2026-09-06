@@ -1,0 +1,114 @@
+@import url("");
+
+/* Main content margin adjustments for sidebar */
+.main-content {
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.main-content.sidebar-visible {
+  margin-left: 18rem; /* 288px = w-72 */
+}
+
+.main-content.full-width {
+  margin-left: 0;
+}
+
+/* Sidebar shadow */
+.sidebar {
+  box-shadow: rgb(113 122 131 / 11%) 0px 7px 30px 0px;
+}
+
+/* Z-index for navigation items */
+.nav-item,
+.navbar {
+  z-index: 10000;
+}
+
+/* Prevent body scroll when sidebar is open on mobile */
+.body-no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Mobile specific styles */
+@media screen and (max-width: 900px) {
+  .main-content.sidebar-visible {
+    margin-left: 0; /* Remove margin on mobile */
+  }
+  
+  .sidebar {
+    height: calc(100vh - 4rem); /* Account for header */
+    overflow-y: auto;
+  }
+  
+  /* Ensure header stays on top */
+  .navbar {
+    z-index: 10000;
+  }
+}
+
+/* Dialog and popup z-index */
+.e-dlg-center-center,
+.e-quick-popup-wrapper.e-device {
+  z-index: 1000000 !important;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(147, 51, 234, 0.3);
+  border-radius: 40px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(147, 51, 234, 0.5);
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Sidebar specific scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(147, 51, 234, 0.3);
+  border-radius: 9999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(147, 51, 234, 0.5);
+}
+
+/* Color picker style */
+#preview {
+  background: transparent
+    url("https://ej2.syncfusion.com/react/demos/src/color-picker/images/pen.png")
+    no-repeat;
+  display: inline-block;
+  height: 80px;
+  margin: 10px 0;
+  min-width: 300px;
+  max-width: 600px;
+  background-color: #008000;
+}
+
+/* Input group styles */
+.e-input-group:not(.e-float-icon-left),
+.e-input-group.e-success:not(.e-float-icon-left),
+.e-input-group.e-warning:not(.e-float-icon-left),
+.e-input-group.e-error:not(.e-float-icon-left),
+.e-input-group.e-control-wrapper:not(.e-float-icon-left),
+.e-input-group.e-control-wrapper.e-success:not(.e-float-icon-left),
+.e-input-group.e-control-wrapper.e-warning:not(.e-float-icon-left),
+.e-input-group.e-control-wrapper.e-error:not(.e-float-icon-left) {
+  border: none;
+}
