@@ -53,16 +53,21 @@ app.use(DatasetMakananRoute);
 app.use(HasilAkhirMakananRoute);
 app.use(PerhitunganRoute);
 
-(async () => {
-  try {
-    await db.authenticate();
-    console.log("Database connected");
-    await db.sync();
-    console.log("All tables synced");
-  } catch (err) {
-    console.error("Database error:", err.message);
-  }
-})();
+// Di lingkungan serverless (Vercel), module ini bisa di-require ulang tiap
+// cold start. Kita pakai flag di `global` supaya authenticate()+sync() cuma
+// jalan sekali per container yang masih hangat, bukan tiap invocation.
+if (!global.__dbInitialized) {
+  global.__dbInitialized = (async () => {
+    try {
+      await db.authenticate();
+      console.log("Database connected");
+      await db.sync();
+      console.log("All tables synced");
+    } catch (err) {
+      console.error("Database error:", err.message);
+    }
+  })();
+}
 
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => console.log(`Server berjalan secara lokal di port ${port}`));
