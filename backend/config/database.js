@@ -1,4 +1,5 @@
 const { Sequelize } = require("sequelize");
+const mysql2 = require("mysql2");
 require("dotenv").config();
 
 const poolConfig = {
@@ -13,9 +14,7 @@ const createConnection = () => {
 
   return new Sequelize(dbUrl, {
     dialect: "mysql",
-    dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: false }
-    },
+    dialectModule: mysql2,
     logging: false,
     pool: poolConfig,
   });
