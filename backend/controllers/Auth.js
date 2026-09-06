@@ -1,5 +1,5 @@
 const Users = require("../models/UserModel.js");
-const argon = require("argon2");
+const { verifyPassword } = require("../utils/passwordHelper.js");
 const jwt = require('jsonwebtoken');
 
 const Login = async(req, res) => {
@@ -12,7 +12,7 @@ const Login = async(req, res) => {
         
         if (!user) return res.status(404).json({msg: "User tidak ditemukan"});
         
-        const match = await argon.verify(user.password, req.body.password);
+        const match = await verifyPassword(user.password, req.body.password);
         if (!match) return res.status(400).json({msg: "Password Salah"});
         
         // Create JWT token
@@ -20,7 +20,7 @@ const Login = async(req, res) => {
             userId: user.uuid,
             username: user.username,
             role: user.role
-        }, process.env.JWT_SECRET_ADMIN, {
+        }, process.env.JWT_SECRET_ADMIN || "supersecretadmin123key", {
             expiresIn: '24h' // Token expires in 24 hours
         });
 
@@ -48,7 +48,7 @@ const Me = async(req, res) => {
         }
 
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_ADMIN);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_ADMIN || "supersecretadmin123key");
         
         const user = await Users.findOne({
             attributes: ['uuid', 'username', 'email', 'role'],

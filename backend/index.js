@@ -70,14 +70,14 @@ if (!global.__dbInitialized) {
 
       // Auto-seed user admin jika belum ada
       const Users = require("./models/UserModel.js");
-      const argon = require("argon2");
+      const { hashPassword } = require("./utils/passwordHelper.js");
       const existing = await Users.findOne({ where: { username: "admin" } });
       if (!existing) {
-        const hashPassword = await argon.hash("admin123");
+        const hashedPassword = await hashPassword("admin123");
         await Users.create({
           username: "admin",
           email: "admin@spk.com",
-          password: hashPassword,
+          password: hashedPassword,
           role: "admin",
         });
         console.log("✅ Default admin user created (admin / admin123)");

@@ -1,5 +1,5 @@
 const Users = require("../models/UserModel.js");
-const argon = require("argon2");
+const { hashPassword } = require("../utils/passwordHelper.js");
 const jwt = require('jsonwebtoken');
 
 const getUsers = async(req, res) => {
@@ -40,11 +40,11 @@ const createUsers = async(req, res) => {
     const assignedRole = (req.role === "admin" && role) ? role : "user";
     
     try {
-        const hashPassword = await argon.hash(password);
+        const hashedPassword = await hashPassword(password);
         await Users.create({
             username: username,
             email: email,
-            password: hashPassword,
+            password: hashedPassword,
             role: assignedRole
         });
         res.status(201).json({msg: "Register berhasil!"});
@@ -61,18 +61,18 @@ const updateUsers = async(req, res) =>{
     });
     if(!user) return res.status(404).json({msg: "User tidak ditemukan"});
     const {username, email, password, confPassword, role} = req.body;
-    let hashPassword;
+    let hashedPassword;
     if(password === "" || password === null){
-        hashPassword = user.password
+        hashedPassword = user.password
     }else{
-        hashPassword = await argon.hash(password);
+        hashedPassword = await hashPassword(password);
     }
     if(password !== confPassword) return res.status(400).json({msg: "Password dan Confirm Password tidak cocok"});
     try {
         await Users.update({
             username: username,
             email: email,
-            password: hashPassword,
+            password: hashedPassword,
             role: role
         },{
             where:{
