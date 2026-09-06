@@ -17,6 +17,7 @@ const PerhitunganMakanan = () => {
   const [kriteriaMakanan, setKriteriaMakanan] = useState([]);
   const [datasetMakanan, setDatasetMakanan]   = useState([]);
   const [hasilPerhitungan, setHasilPerhitungan] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
