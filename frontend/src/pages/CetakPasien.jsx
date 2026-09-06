@@ -57,7 +57,10 @@ const CetakPasien = () => {
       });
 
       // ── LAYER 2: FILTER KLINIS BERBASIS KATEGORI PASIEN ────────
-      const kategoriPasien = parsed.kategori;
+      const katLower = (parsed.kategori || "").toLowerCase();
+      const isDefisit = katLower.includes("defisit");
+      const isSurplus = katLower.includes("surplus");
+
       const boleh = [];
       const tidakBoleh = [];
       datasetMakanan.forEach(m => {
@@ -75,6 +78,8 @@ const CetakPasien = () => {
         const kaloriTinggi    = m.nilai?.["Kalori Tinggi"]    === "Ya";
         const lemakTinggi     = m.nilai?.["Lemak Tinggi"]     === "Ya";
         const igTinggi        = m.nilai?.["IG Tinggi"]        === "Ya";
+        const karboTinggi     = m.nilai?.["Karbo Tinggi"]     === "Ya";
+        const proteinTinggi   = m.nilai?.["Protein Tinggi"]   === "Ya";
 
         const item = {
           nama: m.nilai?.["Nama Makanan"] || "-",
@@ -82,17 +87,22 @@ const CetakPasien = () => {
         };
 
         let bolehkah;
-        if (kategoriPasien === "Defisit Kalori") {
-          const adalahSayur   = kategoriMakanan === "Serat";
+        if (isDefisit) {
+          // Defisit Kalori: Hanya makanan rendah kalori & rendah lemak & rendah IG
+          const adalahSayur   = kategoriMakanan === "Serat" || kategoriMakanan === "Sayur";
           const adalahBuah    = kategoriMakanan === "Buah";
           const adalahProtein = kategoriMakanan === "Protein";
-          bolehkah = !igTinggi && !kaloriTinggi && !lemakTinggi && (adalahSayur || adalahBuah || adalahProtein);
-        } else if (kategoriPasien === "Surplus Kalori") {
+          const adalahKarbo   = kategoriMakanan === "Karbohidrat";
+          bolehkah = !igTinggi && !kaloriTinggi && !lemakTinggi && !karboTinggi && (adalahSayur || adalahBuah || adalahProtein || adalahKarbo);
+        } else if (isSurplus) {
+          // Surplus Kalori: Makanan bergizi & berkalori/protein tinggi, hindari IG tinggi (gula/manis ekstrim)
           const adalahKarbo   = kategoriMakanan === "Karbohidrat";
           const adalahProtein = kategoriMakanan === "Protein";
-          const adalahCemilan = kategoriMakanan === "Cemilan";
-          bolehkah = !igTinggi && (adalahKarbo || adalahProtein || adalahCemilan);
+          const adalahCemilan = kategoriMakanan === "Cemilan" || kategoriMakanan === "Camilan";
+          const adalahBuah    = kategoriMakanan === "Buah";
+          bolehkah = !igTinggi && (adalahKarbo || adalahProtein || adalahCemilan || adalahBuah || proteinTinggi || kaloriTinggi);
         } else {
+          // Normal: Pakai Naive Bayes Boleh/Tidak Boleh
           bolehkah = prediksiNB === "Boleh";
         }
 

@@ -73,12 +73,15 @@ const HasilAkhirPasien = () => {
     return filtered.slice(0, count);
   };
 
-  // Function untuk mendapatkan rekomendasi makanan berdasarkan kategori pasien (DETERMINISTIK)
   const getRekomendasiMakanan = (kategoriPasien) => {
     let result = [];
     if (!makanan || makanan.length === 0) return [];
     
-    if (kategoriPasien === "Surplus Kalori") {
+    const katLower = (kategoriPasien || "").toLowerCase();
+    const isDefisit = katLower.includes("defisit");
+    const isSurplus = katLower.includes("surplus");
+
+    if (isSurplus) {
       const kaloriTinggi = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Ya");
       const kaloriRendah = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Tidak");
       
@@ -105,7 +108,7 @@ const HasilAkhirPasien = () => {
         const remaining = makanan.filter(item => !usedNames.includes(item.nilai?.["Nama Makanan"]));
         result = [...result, ...remaining.slice(0, 10 - result.length)];
       }
-    } else if (kategoriPasien === "Defisit Kalori") {
+    } else if (isDefisit) {
       const kaloriRendah = makanan.filter((item) => item.nilai?.["Kalori Tinggi"] === "Tidak");
       const karbo = getDeterministicByCategory(kaloriRendah, "karbohidrat", 3);
       const protein = getDeterministicByCategory(kaloriRendah, "protein", 3);

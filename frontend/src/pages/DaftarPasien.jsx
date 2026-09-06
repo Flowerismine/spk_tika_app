@@ -135,18 +135,15 @@ const DaftarPasien = () => {
     p.namaPasien.toLowerCase().includes(search.toLowerCase())
   );
 
-  const kategoriColor = {
-    "Defisit Kalori": "bg-orange-500/20 text-orange-400 border-orange-500/30",
-    "Surplus Kalori": "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    "Kalori Normal":  "bg-green-500/20 text-green-400 border-green-500/30",
-  };
+  const isDefisit = (kat) => kat && kat.toLowerCase().includes("defisit");
+  const isSurplus = (kat) => kat && kat.toLowerCase().includes("surplus");
 
   // Statistik
   const stat = {
     total: pasien.length,
-    defisit: pasien.filter(p => p.kategori === "Defisit Kalori").length,
-    surplus: pasien.filter(p => p.kategori === "Surplus Kalori").length,
-    normal:  pasien.filter(p => p.kategori === "Kalori Normal").length,
+    defisit: pasien.filter(p => isDefisit(p.kategori)).length,
+    surplus: pasien.filter(p => isSurplus(p.kategori)).length,
+    normal:  pasien.filter(p => !isDefisit(p.kategori) && !isSurplus(p.kategori)).length,
   };
 
   return (
