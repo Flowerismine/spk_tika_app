@@ -52,7 +52,6 @@ const Navbar = () => {
     activeMenu,
     setActiveMenu,
     setScreenSize,
-    screenSize,
   } = useStateContext();
 
   // Update time every minute

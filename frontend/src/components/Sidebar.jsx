@@ -3,7 +3,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Link, NavLink } from "react-router-dom";
-import { FiMenu, FiLogOut } from "react-icons/fi";
 import { MdOutlineCancel } from "react-icons/md";
 import { BiSolidDashboard } from "react-icons/bi";
 import { FaRegFileAlt, FaBrain } from "react-icons/fa";
