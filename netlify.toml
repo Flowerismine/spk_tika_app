@@ -3,6 +3,10 @@
   publish = "frontend/build"
   functions = "backend/functions"
 
+[functions]
+  external_node_modules = ["mysql2", "sequelize", "argon2"]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
