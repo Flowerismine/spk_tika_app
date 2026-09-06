@@ -3,10 +3,10 @@ const mysql2 = require("mysql2");
 require("dotenv").config();
 
 const poolConfig = {
-  max: 3,
+  max: 2,
   min: 0,
   acquire: 30000,
-  idle: 10000,
+  idle: 2000,
 };
 
 const createConnection = () => {
