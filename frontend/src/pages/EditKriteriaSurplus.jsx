@@ -29,8 +29,7 @@ const EditKriteriaSurplus = () => {
   const getKriteriaSurplusById = async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = "http://localhost:5000";
-      const response = await axios.get(`${apiUrl}/kriteria-surplus/${id}`, {
+      const response = await axios.get(`${API_URL}/kriteria-surplus/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,8 +53,7 @@ const EditKriteriaSurplus = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = "http://localhost:5000";
-      await axios.patch(`${apiUrl}/kriteria-surplus/${id}`, jsonData, {
+      await axios.patch(`${API_URL}/kriteria-surplus/${id}`, jsonData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
